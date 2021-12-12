@@ -31,12 +31,13 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.flag = 0
         self.btengan = 0
         self.pen=pg.mkPen(color='c')
-        self.x=[2.3,3.5,4.6,5.0,6.1,7.0,7.2,8.5,8.6,8.8,8.9, 9, 9.1, 9.6, 10., 10.5]
-        self.signal=[1.2,2.6,3.1,4.2,5.3,5.8,6.4,7.0,7.6,8.0,8.5, 8.7, 9, 9.5, 10.1, 10.6]
-        self.length_original_data = len(self.signal)
+        # self.x=[2.3,3.5,4.6,5.0,6.1,7.0,7.2,8.5,8.6,8.8,8.9, 9, 9.1, 9.6, 10., 10.5]
+        # self.signal=[1.2,2.6,3.1,4.2,5.3,5.8,6.4,7.0,7.6,8.0,8.5, 8.7, 9, 9.5, 10.1, 10.6]
+        # self.length_original_data = len(self.signal)
         self.actionSamples.triggered.connect(self.show_sample_alone)
         self.actionPlot.triggered.connect(self.draw_signal)
         self.pushButton.pressed.connect(self.error)
+        self.actionOpen.triggered.connect(self.prepare_data)
 
         self.portion_horizontalSlider.valueChanged.connect(self.handle_sliders)
         self.order_horizontalSlider.valueChanged.connect(self.handle_sliders)
@@ -100,7 +101,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.graphicsView.plot(self.x, self.signal,
                   pen=None,
                   name="BEP",
-                  symbol='o',
+                  symbol='x',
                   symbolPen=pg.mkPen(color=(255, 0, 0), width=0),                                      
                   symbolBrush=pg.mkBrush(255, 255, 0, 255),
                   symbolSize=7)
@@ -125,6 +126,17 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.indices_list.append(length_of_data-1)
         
 
+
+        
+    def draw_signal(self):
+        self.graphicsView.plot(self.x, self.signal, pen = self.pen, title="Three plot curves")
+        self.devide_to_chunks(1000,5,20)
+        self.interpolation([0,1],500)
+        self.draw_interpolation()
+        self.mathTex_to_QPixmap()
+        if self.actionSamples.isChecked():
+            self.self.error()
+
     def error(self):
         if not self.flag:
             self.pushButton.setText('Cancel')
@@ -133,15 +145,12 @@ class MainApp(QMainWindow, FORM_CLASS):
             chunks= np.arange(1,4)
             overlaps = np.arange(0,21, 5)
             orders = np.arange(3,5)
-            # chunks = np.arange(1,5)
-            # overlaps = np.arange()
-            
-            # print(orders,'order')
+  
             self.btengan = 0
             summ = 0
             self.Error_map = np.zeros((len(chunks),len(overlaps),len(orders)))
-            for chunk in range(len(chunks)):
-                for overlap in range(len(overlaps)):
+            for chunk in range(len(chunks)-1):
+                for overlap in range(len(overlaps)-1):
                     self.devide_to_chunks(len(self.signal),chunks[chunk],overlaps[overlap])
                     print(self.indices_list)
                     print(overlaps[overlap], 'overlap', chunks[chunk], 'chunk')
@@ -156,23 +165,12 @@ class MainApp(QMainWindow, FORM_CLASS):
                             # self.Error_map[chunk,overlap,order-3]=self.interpolation([index,index+1],order)
                             print(self.Error_map[chunk,overlap,order-3], 'ERRRRR')
                             print(self.Error_map[:,:,0],'slaysaia')
-                            
-                            # print(order,'ininter')
         else:
             self.pushButton.setText('Start')
             self.flag = 0
-        
-    def draw_signal(self):
-        self.graphicsView.plot(self.x, self.signal, pen = self.pen, title="Three plot curves")
-        self.devide_to_chunks(16,1,0)
-        self.interpolation([0,1],10)
-        self.draw_interpolation()
-        self.mathTex_to_QPixmap()
-        if self.actionSamples.isChecked():
-            self.self.error()
-
 
     def interpolation(self,indices_list,order):
+        self.length_original_data = len(self.signal)
         print(indices_list, 'indices', self.indices_list, 'selfindie')
         kkk = indices_list[0]
         index1 = self.indices_list[kkk]
@@ -186,8 +184,8 @@ class MainApp(QMainWindow, FORM_CLASS):
         num_of_samples = len(y)
         # print(self.length_original_data,'lenn')
         step = ceil((self.length_original_data/order)-1)
-        if step > 3: 
-            return 0
+        # if step > 3: 
+        #     return 0
             
         print(step, 'step')
         print(len(y), 'yyy')
@@ -211,42 +209,42 @@ class MainApp(QMainWindow, FORM_CLASS):
             for i in range(0,n-m): 
                 b[i,m] = (b[i+1,m-1]-b[i,m-1])/(x_samples[i+m-1]-x_samples[i])
                 
-        xx=np.arange(2,11.,.1)
-        np.around(xx, 2, xx)
-        # print(xx[3],'hatoly el kalb dah')
+        self.xx =np.arange(self.x[0],len(self.x),.5)
+        np.around(self.xx, 2, self.xx)
+        # print(self.xx[3],'hatoly el kalb dah')
         xt = 1
-        # yint = np.zeros(len(xx))
+        # yint = np.zeros(len(self.xx))
         yint = b[1,1]
         ystring =str(b[1,1])
         xt_str =""
         coeff = b[1]
         np.around(coeff, 2, coeff)
         for m in range( 0,n-1):
-            xt = xt*(xx-x_samples[m])
+            xt = xt*(self.xx-x_samples[m]) 
             yint = yint+b[1,m+1]*xt
             print(type(xt), 'ana xt')
-            if order > 4 and m > 2 and m < n-3:
-                ystring += "."
-            else:
-                xt_str += f"(x-{x_samples[m]})"
-                new_coeff = coeff[m+1]
-                if new_coeff < 0.1 and new_coeff > - 0.1 :continue
-                ystring += f"+({new_coeff})({xt_str})"
+            # if order > 4 and m > 2 and m < n-3:
+            #     ystring += "."
+            # else:
+            xt_str += f"(x-{x_samples[m]})"
+            new_coeff = coeff[m+1]
+            if new_coeff < 0.1 and new_coeff > - 0.1 :continue
+            ystring += f"+({new_coeff})({xt_str})"
         self.ystring = ystring
         print( type(yint), 'two')
         print(b, 'bbbbbeeeb')
         if step == 2:
-            plt.plot(xx,yint)
+            plt.plot(self.xx,yint)
             plt.show()
-        xx = list(xx)
+        self.xx = list(self.xx)
         print(type(yint), 'three')
         self.yint = yint
-        self.xx = xx
+        self.gamal = self.xx
         yint_picked = [] 
         print(type(yint), 'four')
         for z in x:
             # print(yint, 'hoa yint')
-            index = xx.index(z)
+            index = self.xx.index(z)
             yint_picked.append(self.yint[index])
         result = map(lambda original_data, interpolated_data: abs((interpolated_data - original_data)/original_data), y, yint_picked)
         result = list(result)
@@ -260,6 +258,41 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.indices_list =[0]
         last_index = int(((portion_percentage/100)*data_lenght)-1)
         self.indices_list.append(last_index)
+
+    #_____________________________FETCHING DATA________________________#
+    
+    def prepare_data(self):
+        self.browse()
+        self.read_data()
+        self.signal = self.amplitude
+        self.x = self.timestamps
+        print(len(self.x))
+        
+    def browse(self):
+        self.file_path_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', " ", "(*.txt *.csv *.xls)")
+
+    def read_data(self):
+        self.file_name, self.file_extension = os.path.splitext(self.file_path_name)
+        
+        if self.file_extension == '.txt':
+            # to skip the second row, use a list-like argument "[]"
+            # fwf stands for fixed width formatted lines.
+            data = pd.read_fwf(self.file_path_name)
+            self.signal_name = data.columns[1]
+            self.amplitude = data.iloc[:, 1] # gets second column
+            # : means everything in dimension1 from the beginning to the end
+            self.timestamps = data.iloc[:, 0]
+            self.interval = self.timestamps[6]- self.timestamps[5]
+            
+        elif self.file_extension == '.csv':
+            data = pd.read_csv(self.file_path_name)
+            self.signal_name = data.columns[1]
+            self.amplitude = data.iloc[:, 1] # gets second column
+            self.timestamps = data.iloc[:, 0]
+            self.interval = self.timestamps[6]- self.timestamps[5]
+        self.sampling_freq = 1000#1/interval
+        # xy_axes = {'xaxis': xaxis_timestamps, 'yaxis': yaxis_values}
+        # return xy_axes;
 
     
 def main():
