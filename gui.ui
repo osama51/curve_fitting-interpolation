@@ -462,6 +462,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpen"/>
    <addaction name="separator"/>
    <addaction name="actionPlot"/>
    <addaction name="separator"/>
@@ -492,6 +493,18 @@
    </property>
    <property name="toolTip">
     <string>Show Samples</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/open-folder.png</normaloff>icons/open-folder.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open File</string>
    </property>
   </action>
  </widget>
