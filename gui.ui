@@ -64,12 +64,15 @@
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_6">
-               <item row="0" column="0">
+               <item row="1" column="0">
                 <widget class="QLabel" name="label">
                  <property name="text">
                   <string/>
                  </property>
                 </widget>
+               </item>
+               <item row="0" column="0">
+                <layout class="QVBoxLayout" name="formulaeLayout"/>
                </item>
               </layout>
              </widget>
@@ -98,7 +101,7 @@
                </size>
               </property>
              </widget>
-             <widget class="GraphicsLayoutWidget" name="graphicsView_2">
+             <widget class="GraphicsLayoutWidget" name="errorGraph">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>30</horstretch>
@@ -136,11 +139,11 @@
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>16777215</height>
+             <height>250</height>
             </size>
            </property>
            <property name="title">
-            <string>GroupBox</string>
+            <string>Fitting Control</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_2">
             <item row="2" column="1">
@@ -291,7 +294,7 @@
             </size>
            </property>
            <property name="title">
-            <string>GroupBox</string>
+            <string>Map Control </string>
            </property>
            <layout class="QGridLayout" name="gridLayout_4">
             <item row="0" column="1">
@@ -330,7 +333,7 @@
              </layout>
             </item>
             <item row="3" column="0" colspan="3">
-             <widget class="QPushButton" name="pushButton">
+             <widget class="QPushButton" name="starterrorButton">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -478,11 +481,15 @@
    <addaction name="separator"/>
    <addaction name="actionSamples"/>
    <addaction name="actionstring"/>
+   <addaction name="actionerrormap"/>
   </widget>
   <action name="actionPlot">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset>
-     <normaloff>icons/play.png</normaloff>icons/play.png</iconset>
+     <normaloff>icons/signal.ico</normaloff>icons/signal.ico</iconset>
    </property>
    <property name="text">
     <string>Plot</string>
@@ -521,6 +528,11 @@
   <action name="actionstring">
    <property name="text">
     <string>string</string>
+   </property>
+  </action>
+  <action name="actionerrormap">
+   <property name="text">
+    <string>errormap</string>
    </property>
   </action>
  </widget>
