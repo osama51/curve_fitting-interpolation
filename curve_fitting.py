@@ -265,9 +265,9 @@ class MainApp(QMainWindow, FORM_CLASS):
         spec_plot.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
         spec_plot.setLabel('bottom', "Time", units='s')
         spec_plot.setLabel('left', "Frequency", units='Hz')
-        hist.gradient.restoreState({'ticks': [(0.0, (0, 0, 0, 255)), (0.01, (32, 0, 129, 255)),
-                                            (0.8, (255, 255, 0, 255)), (0.5, (115, 15, 255, 255)),
-                                            (1.0, (255, 255, 255, 255))], 'mode': 'rgb'})
+        # hist.gradient.restoreState({'ticks': [(0.0, (0, 0, 0, 255)), (0.01, (32, 0, 129, 255)),
+        #                                     (0.8, (255, 255, 0, 255)), (0.5, (115, 15, 255, 255)),
+        #                                     (1.0, (255, 255, 255, 255))], 'mode': 'rgb'})
         #(32, 0, 129, 255)
     
     def sliders_values(self):
