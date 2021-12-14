@@ -33,6 +33,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.btengan = 0
         self.plotted = 0
         self.start_error = 1
+        self.error = 0
         self.formulae = []
         self.pen=pg.mkPen(color='c')
         # self.x=[2.3,3.5,4.6,5.0,6.1,7.0,7.2,8.5,8.6,8.8,8.9, 9, 9.1, 9.6, 10., 10.5]
@@ -43,11 +44,11 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.actionPlot.triggered.connect(self.draw_signal)
         self.actionOpen.triggered.connect(self.prepare_data)
         self.actionstring.triggered.connect(self.controlling_error_axes)
-        self.starterrorButton.pressed.connect(self.error_thread)
+        self.starterrorButton.pressed.connect(self.controlling_error_axes)
         self.order_horizontalSlider.valueChanged.connect(self.run_sliders)
         self.chunks_horizontalSlider.valueChanged.connect(self.run_sliders)
         self.overlap_horizontalSlider.valueChanged.connect(self.run_sliders)
-
+        self.third_dimensionSlider.valueChanged.connect(self.controlling_error_axes)
         self.portion_horizontalSlider.valueChanged.connect(self.handle_sliders)
         self.order_horizontalSlider.valueChanged.connect(self.handle_sliders)
         self.order_horizontalSlider.valueChanged.connect(lambda:self.handle_sliders)
@@ -60,6 +61,8 @@ class MainApp(QMainWindow, FORM_CLASS):
         
     def run_sliders(self):
         if self.actionPlot.isChecked():
+            for i in reversed(range(self.formulaeLayout.count())): 
+                self.formulaeLayout.itemAt(i).widget().setParent(None)
             self.draw_signal()
             
     def handle_sliders(self):
@@ -74,19 +77,19 @@ class MainApp(QMainWindow, FORM_CLASS):
         # '$k_{soil}=frac{sum f_j k_j theta_j}{sum f_j theta_j}$',
         # '$lambda_{soil}=k_{soil}  C_{soil}$']
         np.around(self.coeff, 3, self.coeff)
-  
-        terms = [self.coeff[0]]
+        n = len(self.coeff)
+        terms = [self.coeff[n-1]]
         terms = str(terms)
         for i in range(1,self.degree+1,1):
-            if self.coeff[i] < 0.01 and self.coeff[i] > - 0.01 :continue
-            print(i, 'i', self.coeff[i])
+            if self.coeff[n-i] < 0.001 and self.coeff[n-i] > - 0.001 :continue
+            # print(i, 'i', self.coeff[n-i])
             # coeff = self.coeff[i]
-            terms += f'$+ ({self.coeff[i]}) x^{i} $'
+            terms += f'$+ ({self.coeff[n-i]}) x^{i} $'
             # terms.append(expr)
                 
-        print(terms)
+        # print(terms)
         mathTex = 'f(x)=' + terms
-        print(mathTex)
+        # print(mathTex)
         #---- set up a mpl figure instance ----
     
         fig = mpl.figure.Figure()
@@ -119,9 +122,11 @@ class MainApp(QMainWindow, FORM_CLASS):
         qimage = QtGui.QImage.rgbSwapped(QtGui.QImage(buf, size[0], size[1],
                                                       QtGui.QImage.Format_ARGB32))
         # self.formulae += qimage
+        
         qpixmap = QtGui.QPixmap(qimage)
         label = QtGui.QLabel(pixmap=qpixmap)
         # self.scrollArea.setWidgetResizable(False)
+        
         self.formulaeLayout.addWidget(label)
         # self.label.setPixmap(qpixmap)
             
@@ -147,37 +152,50 @@ class MainApp(QMainWindow, FORM_CLASS):
     def error_thread(self):
         if self.start_error:
             # t = Thread(target = self.draw_errormap,)
-            _thread.start_new_thread(self.draw_errormap,())
+            # _thread.start_new_thread(self.draw_errormap,())
+            self.draw_errormap()
             # t.start()
             self.start_error = 0
-            print(self.start_error)
+            # print(self.start_error)
         else:
-            _thread.exit()
+            # _thread.exit()
             self.start_error = 1
         self.error_button_text()
         
     def controlling_error_axes(self):
         # self.Error_map = np.zeros((len(chunks),len(overlaps),len(orders)))
+        if not self.error:
+            self.error_map()
+            self.error = 1
+        self.third_dimension = self.third_dimensionSlider.value()
         condition1 = self.order_x_radioButton.isChecked() and self.order_y_radioButton.isChecked()
         condition2 = self.chunks_x_radioButton.isChecked() and self.chunks_y_radioButton.isChecked()
         condition3 = self.overlap_x_radioButton.isChecked() and self.overlap_y_radioButton.isChecked()
         if (condition1) or (condition2) or (condition3):
             self.label_alert.setText("Pick different variables for the same graph!😑")
         else:
-            self.label_alert.setText("😘😘")
-            
+            self.label_alert.setText("")
+        self.third_dimensionSlider.setMinimum(1)
         if self.order_x_radioButton.isChecked() and self.chunks_y_radioButton.isChecked():
-            self.img_map=self.Error_map[:,1,:]
+            self.img_map=self.Error_map[:,int(self.third_dimension),:]
+            self.third_dimensionSlider.setMaximum(5)
         elif self.order_x_radioButton.isChecked() and self.overlap_y_radioButton.isChecked():
-            self.img_map=self.Error_map[1,:,:]
+            self.img_map=self.Error_map[int(self.third_dimension),:,:]
+            self.third_dimensionSlider.setMaximum(49)
         elif self.chunks_x_radioButton.isChecked() and self.order_y_radioButton.isChecked():
-            self.img_map=np.transpose(self.Error_map[:,1,:])
+            self.img_map=np.transpose(self.Error_map[:,int(self.third_dimension),:])
+            self.third_dimensionSlider.setMaximum(5)
         elif self.chunks_x_radioButton.isChecked() and self.overlap_y_radioButton.isChecked():
-            self.img_map=self.Error_map[:,:,1]
+            self.img_map=self.Error_map[:,:,int(self.third_dimension)]
+            self.third_dimensionSlider.setMaximum(20)
         elif self.overlap_x_radioButton.isChecked() and self.order_y_radioButton.isChecked():
-            self.img_map=np.transpose(self.Error_map[1,:,:])
+            self.img_map=np.transpose(self.Error_map[int(self.third_dimension),:,:])
+            self.third_dimensionSlider.setMaximum(49)
         elif self.overlap_x_radioButton.isChecked() and self.chunks_y_radioButton.isChecked():
-            self.img_map=np.transpose(self.Error_map[:,:,1])
+            self.img_map=np.transpose(self.Error_map[:,:,int(self.third_dimension)])
+            self.third_dimensionSlider.setMaximum(20)
+        self.draw_errormap(self.img_map)
+        
             
     def devide_to_chunks(self,length_of_data, number_of_chunks, overlap_percentage):
         overlap_percentage /= 100
@@ -195,20 +213,28 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.indices_list.append(length_of_data-1)
         
     def interpolation(self, indices_list, degree):
-        print(indices_list, 'indices', self.indices_list, 'selfindie')
+        # print(indices_list, 'indices', self.indices_list, 'selfindie')
         first_ind = indices_list[0]
         self.index1 = self.indices_list[first_ind]
         self.index2 = self.indices_list[indices_list[1]]+1
         y=np.array(self.y_axis[self.index1:self.index2])
         x=np.array(self.x_axis[self.indices_list[indices_list[0]]:self.indices_list[indices_list[1]]+1])
         self.piece_interpolation(x, y, degree)
+        
 
     def piece_interpolation(self, x_data, y_data, degree):
-        self.coeff = np.polyfit(x_data, y_data,degree)
+        
+        self.coeff = np.polyfit(x_data, y_data,degree, rcond=None, full=False, w=None, cov=False)
         self.y_fitted = np.polyval(self.coeff, x_data)
+        # print(self.coeff)
+        
+        
         error = (self.y_fitted - y_data)/y_data
+        # print((self.y_fitted - y_data) , 'fitted')
         error = np.abs(error)
-        error = sum(error[1:])/len(error)
+        # print(len(error), 'len')
+        error = sum(error)/len(error)
+        # print(error, 'len')
         return error
     
     def error_map(self):
@@ -217,7 +243,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         orders = np.arange(1,50)
         progressbar_index = 0
         progressbar_percentage = 0
-        total_percentage = len(chunks)*len(overlaps)*len(orders)
+        total_percentage = (len(chunks))*(len(overlaps))*(len(orders))
         # indices_list = 
         btengan = 0
         summ = 0
@@ -230,7 +256,7 @@ class MainApp(QMainWindow, FORM_CLASS):
                     for order in orders:
                         if btengan == chunks[chunk]:
                             btengan = 0
-                            self.Error_map[chunk,overlap,order-3] = summ/chunks[chunk]
+                            self.Error_map[chunk,overlap,order-1] = summ/chunks[chunk]
                         else:
                             summ += self.piece_interpolation(self.x_axis[self.indices_list[index]:self.indices_list[index+1]],
                                                   self.y_axis[self.indices_list[index]:self.indices_list[index+1]],order)
@@ -238,13 +264,14 @@ class MainApp(QMainWindow, FORM_CLASS):
                         progressbar_index += 1
                         self.Error_map_progressBar.setValue(int((progressbar_index/total_percentage)*100))
                         
-        plt.imshow(self.Error_map[1,:,:], aspect='auto',
+        plt.imshow(self.Error_map[:,3,:], aspect='auto',
                    extent =[orders.min(), orders.max(), overlaps.min(), overlaps.max()],
                    cmap='PuRd', interpolation= 'bessel')
         plt.show()
+        print(self.Error_map[:,3,:])
+        # plt.savefig('pic.png')
         
-    def draw_errormap(self):
-        self.error_map()
+    def draw_errormap(self, error_map_slice):
         self.errorGraph.clear()
        
         # Interpret image data as row-major instead of col-major
@@ -253,27 +280,15 @@ class MainApp(QMainWindow, FORM_CLASS):
         spec_plot = self.errorGraph.addPlot()
         img = pg.ImageItem()
         spec_plot.addItem(img)
-        # hist = pg.HistogramLUTItem() # histogram to control the gradient of the image
-        # hist.setImageItem(img)
-        # graph.addItem(hist)
 
-        # hist.setLevels(np.min(Sxx), np.max(Sxx))
-        img.setImage(self.Error_map[1,:,:]) # Sxx: amplitude for each pixel
-        # img.scale(t[-1]/np.size(self.Error_map[1,:,:], axis=1),
-        #           f[-1]/np.size(self.Error_map[1,:,:], axis=0))
-        
-        spec_plot.setLimits(xMin=0, xMax=t[-1], yMin=0, yMax=f[-1])
-        spec_plot.setLabel('bottom', "Time", units='s')
-        spec_plot.setLabel('left', "Frequency", units='Hz')
-        # hist.gradient.restoreState({'ticks': [(0.0, (0, 0, 0, 255)), (0.01, (32, 0, 129, 255)),
-        #                                     (0.8, (255, 255, 0, 255)), (0.5, (115, 15, 255, 255)),
-        #                                     (1.0, (255, 255, 255, 255))], 'mode': 'rgb'})
-        #(32, 0, 129, 255)
+        img.setImage(error_map_slice, cmap='PuRd') # Sxx: amplitude for each pixel
+
     
     def sliders_values(self):
         self.degree = self.order_horizontalSlider.value()
         self.overlap = self.overlap_horizontalSlider.value()
         self.chunks = self.chunks_horizontalSlider.value()
+        self.third_dimension = self.third_dimensionSlider.value()
         
     def draw_signal(self):
         # self.pg.PlotCurveItem(self.x_axis, self.y_axis, pen = (1, 3), name= "Original")
@@ -283,7 +298,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.devide_to_chunks(len(self.y_axis),self.chunks,self.overlap)
         # self.interpolation(self.x_axis, self.y_axis ,self.degree)
         self.draw_interpolation()
-        self.mathTex_to_QPixmap()
+        # self.mathTex_to_QPixmap()
         if self.actionSamples.isChecked():
             self.show_samples()
 
@@ -297,6 +312,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.interpolation([chunk+i-1,chunk+i],self.degree)
             y_int[self.index1:self.index2] += self.y_fitted
             i += 1
+            self.mathTex_to_QPixmap()
         # m = 0
         # for h in range(1,chunks,1):
         #     y_int[self.indices_list[2*h]:self.indices_list[2*h-1]+1] /= 2
@@ -321,8 +337,9 @@ class MainApp(QMainWindow, FORM_CLASS):
     def prepare_data(self):
         self.browse()
         self.read_data()
-        self.y_axis = self.amplitude
-        self.x_axis = self.timestamps
+        self.y_axis = np.array(self.amplitude)
+        self.x_axis = np.array(self.timestamps)
+        print(type(self.y_axis))
         # self.x_axis = np.linspace(0, len(self.x_axis),len(self.x_axis))
 
         
